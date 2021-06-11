@@ -196,7 +196,7 @@ argument:
 
 The supported targets are:
 
- * Platforms: `darwin`, `linux`, `windows`
+ * Platforms: `darwin`, `linux`, `windows`, iOS, android
  * Achitectures: `386`, `amd64`, `arm-5`, `arm-6`, `arm-7`, `arm64`, `mips`, `mipsle`, `mips64`, `mips64le`
 
 ### Platform versions

@@ -401,6 +401,8 @@ func compile(image string, config *ConfigFlags, flags *BuildFlags, folder string
 
 	args = append(args, []string{image, config.Repository}...)
 
+	fmt.Printf("running docker with args: %v\n", args)
+
 	cmd := exec.Command("docker", args...)
 	if config.ForwardSsh {
 		cmd.Stdin = os.Stdin
