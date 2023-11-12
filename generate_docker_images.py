@@ -12,11 +12,15 @@ def generate_image(image):
   else:
     version = version + ".0"
     wildcard = wildcard + ".x"
+
   try:
+    print("trying to create version folder ", "docker/"+version, " ...")
     os.mkdir("docker/"+version)
   except:
     print("version folder already exists")
+    
   try:
+    print("trying to create wildcard folder ", "docker/"+wildcard, " ...")  
     os.mkdir("docker/"+wildcard)
   except:
     print("wildcard folder already exists")
@@ -49,6 +53,8 @@ except:
   print("failed to parse json")
   exit(1)
 
+print("len(golangJson): %s" % len(golangJson))
+
 if len(golangJson) != 2:
   # the script below assumes only two stable versions
   print("unexpected number of golang versions returned")
@@ -62,6 +68,7 @@ docker_images = []
 for file in files:
   x = [f for f in file if (f['os'] == "linux" and f['arch'] == "amd64" ) ][0]
   docker_images.append(x)
+print("docker_images: ", docker_images)
 
 for docker_image in docker_images:
   generate_image(docker_image)

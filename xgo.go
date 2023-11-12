@@ -42,6 +42,8 @@ func init() {
 // Cross compilation docker containers
 var dockerBase = "techknowlogick/xgo:base"
 var dockerDist = "techknowlogick/xgo:"
+// var dockerBase = "liuyidockers/xgo4geth:latest"
+// var dockerDist = "liuyidockers/xgo4geth:"
 
 // Command line arguments to fine tune the compilation
 var (

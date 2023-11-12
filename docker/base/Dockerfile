@@ -19,9 +19,39 @@ ADD fetch.sh /fetch.sh
 ENV FETCH /fetch.sh
 RUN chmod +x $FETCH
 
+# address the cmake version issue
+# RUN \
+#   apt-get update && \
+#   apt-get install -y wget make && \
+#   apt install -y build-essential libssl-dev && \
+#   wget https://github.com/Kitware/CMake/releases/download/v3.16.5/cmake-3.16.5.tar.gz && \
+#   tar -zxvf cmake-3.16.5.tar.gz && \
+#   cd cmake-3.16.5 && \
+#   ./bootstrap && \
+#   make -j6 && \
+#   make install && \
+#   cmake --version 
+
+  # wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null && \
+  # echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ bionic main' | tee /etc/apt/sources.list.d/kitware.list >/dev/null && \
+  # rm /usr/share/keyrings/kitware-archive-keyring.gpg && \
+  # apt-get install -y kitware-archive-keyring && \
+  # apt-get update && \
+  # apt-get install -y cmake
+
 # Make sure apt-get is up to date and dependent packages are installed
+
 RUN \
   apt-get update && \
+  apt-get install -y wget make && \
+  apt install -y build-essential libssl-dev && \
+  wget https://github.com/Kitware/CMake/releases/download/v3.16.5/cmake-3.16.5.tar.gz && \
+  tar -zxvf cmake-3.16.5.tar.gz && \
+  cd cmake-3.16.5 && \
+  ./bootstrap && \
+  make -j6 && \
+  make install && \
+  cd .. && \
   apt-get install -y automake autogen build-essential ca-certificates                    \
     gcc-5-arm-linux-gnueabi g++-5-arm-linux-gnueabi libc6-dev-armel-cross                \
     gcc-5-arm-linux-gnueabihf g++-5-arm-linux-gnueabihf libc6-dev-armhf-cross            \
@@ -42,7 +72,7 @@ RUN \
     gcc-6-powerpc64le-linux-gnu g++-6-powerpc64le-linux-gnu libc6-dev-powerpc-ppc64-cross \
     gcc-6-multilib g++-6-multilib gcc-7-multilib g++-7-multilib gcc-mingw-w64 g++-mingw-w64 \
     clang llvm-dev libtool libxml2-dev uuid-dev libssl-dev swig openjdk-8-jdk pkg-config patch \
-    make xz-utils cpio wget zip unzip p7zip git mercurial bzr texinfo help2man cmake curl mercurial && \
+    xz-utils cpio zip unzip p7zip git mercurial bzr texinfo help2man curl mercurial && \
     apt-get install -y libssl1.1 openssl ca-certificates && \
     update-ca-certificates && \
   apt-get clean && \
@@ -59,60 +89,60 @@ ADD patches /patches
 # Darwin Toolchain build #
 ##########################
 
-# Configure the container for OSX cross compilation
-ENV OSX_SDK MacOSX11.1.sdk
-ENV OSX_SDK_PATH https://github.com/phracker/MacOSX-SDKs/releases/download/11.0-11.1/${OSX_SDK}.tar.xz
+# # Configure the container for OSX cross compilation
+# ENV OSX_SDK MacOSX11.1.sdk
+# ENV OSX_SDK_PATH https://github.com/phracker/MacOSX-SDKs/releases/download/11.0-11.1/${OSX_SDK}.tar.xz
 
-# Download the osx sdk and build the osx toolchain
-# We download the osx sdk, patch it and pack it again to be able to throw the patched version at osxcross
-RUN \
-  $FETCH $OSX_SDK_PATH 9b86eab03176c56bb526de30daa50fa819937c54b280364784ce431885341bf6 && \
-  tar -xf `basename $OSX_SDK_PATH` && rm -f `basename $OSX_SDK_PATH`
-ADD patch.tar.xz $OSX_SDK/usr/include/c++
-RUN tar -cf - $OSX_SDK/ | xz -c - > $OSX_SDK.tar.xz && rm -rf $OSX_SDK
+# # Download the osx sdk and build the osx toolchain
+# # We download the osx sdk, patch it and pack it again to be able to throw the patched version at osxcross
+# RUN \
+#   $FETCH $OSX_SDK_PATH 9b86eab03176c56bb526de30daa50fa819937c54b280364784ce431885341bf6 && \
+#   tar -xf `basename $OSX_SDK_PATH` && rm -f `basename $OSX_SDK_PATH`
+# ADD patch.tar.xz $OSX_SDK/usr/include/c++
+# RUN tar -cf - $OSX_SDK/ | xz -c - > $OSX_SDK.tar.xz && rm -rf $OSX_SDK
 
-ENV OSX_NDK_CROSS /usr/local/osx-ndk-cross
+# ENV OSX_NDK_CROSS /usr/local/osx-ndk-cross
 
-# Actually build the toolchain
-RUN  \
-  git clone https://github.com/tpoechtrager/osxcross.git                                          && \
-  cd osxcross && git checkout 0f87f567dfaf98460244471ad6c0f4311d62079c && cd ../                  && \
-  mv $OSX_SDK.tar.xz /osxcross/tarballs/                                                          && \
-  OSX_VERSION_MIN=10.13 UNATTENDED=1 LD_LIBRARY_PATH=/osxcross/target/lib /osxcross/build.sh      && \
-  mv /osxcross/target $OSX_NDK_CROSS                                                              && \
-  rm -rf /osxcross
+# # Actually build the toolchain
+# RUN  \
+#   git clone https://github.com/tpoechtrager/osxcross.git                                          && \
+#   cd osxcross && git checkout 0f87f567dfaf98460244471ad6c0f4311d62079c && cd ../                  && \
+#   mv $OSX_SDK.tar.xz /osxcross/tarballs/                                                          && \
+#   OSX_VERSION_MIN=10.13 UNATTENDED=1 LD_LIBRARY_PATH=/osxcross/target/lib /osxcross/build.sh      && \
+#   mv /osxcross/target $OSX_NDK_CROSS                                                              && \
+#   rm -rf /osxcross
 
-# Make libxar known to the ld64 and cctools build
-ENV LD_LIBRARY_PATH=$OSX_NDK_CROSS/lib
+# # Make libxar known to the ld64 and cctools build
+# ENV LD_LIBRARY_PATH=$OSX_NDK_CROSS/lib
 
-ENV PATH $OSX_NDK_CROSS/bin:$PATH
+# ENV PATH $OSX_NDK_CROSS/bin:$PATH
 
-# Configure the container for iOS cross compilation
-ENV IOS_NDK_ARM_7     /usr/local/ios-ndk-arm-7
-ENV IOS_NDK_ARM64     /usr/local/ios-ndk-arm64
-ENV IOS_SIM_NDK_AMD64 /usr/local/ios-sim-ndk-amd64
+# # Configure the container for iOS cross compilation
+# ENV IOS_NDK_ARM_7     /usr/local/ios-ndk-arm-7
+# ENV IOS_NDK_ARM64     /usr/local/ios-ndk-arm64
+# ENV IOS_SIM_NDK_AMD64 /usr/local/ios-sim-ndk-amd64
 
-ADD update_ios.sh /update_ios.sh
-ENV UPDATE_IOS /update_ios.sh
-RUN chmod +x $UPDATE_IOS
-ENV IOS_SDK_VERSION iPhoneOS12.4
-RUN \
-  IOS_SDK_FILE=$IOS_SDK_VERSION.sdk.zip && \
-  IOS_SDK_PATH=http://resources.airnativeextensions.com/ios/$IOS_SDK_FILE && \
-  $FETCH $IOS_SDK_PATH 365818df5aea857e19914f577694f80ac864a68c && \
-  mv `basename $IOS_SDK_PATH` $IOS_SDK_VERSION.sdk.tmp.zip && \
-  $UPDATE_IOS /$IOS_SDK_VERSION.sdk.tmp.zip
+# ADD update_ios.sh /update_ios.sh
+# ENV UPDATE_IOS /update_ios.sh
+# RUN chmod +x $UPDATE_IOS
+# ENV IOS_SDK_VERSION iPhoneOS12.4
+# RUN \
+#   IOS_SDK_FILE=$IOS_SDK_VERSION.sdk.zip && \
+#   IOS_SDK_PATH=http://resources.airnativeextensions.com/ios/$IOS_SDK_FILE && \
+#   $FETCH $IOS_SDK_PATH 365818df5aea857e19914f577694f80ac864a68c && \
+#   mv `basename $IOS_SDK_PATH` $IOS_SDK_VERSION.sdk.tmp.zip && \
+#   $UPDATE_IOS /$IOS_SDK_VERSION.sdk.tmp.zip
 
-# 2 separate steps to make it easier to debug
-RUN \
-  rm -rf /$IOS_SDK_VERSION.sdk.tmp.zip  && \
-  # TODO the new iPhoneOS version does not have the /include/c++ directory. Hope it's not an issue...
-  # if it becomes an issue, download from here https://github.com/phracker/MacOSX-SDKs/tree/master/MacOSX10.13.sdk/usr/include
-  # the previous version. Maybe it's not going to be an issue.
-  mkdir -p $IOS_NDK_ARM64/SDK/$IOS_SDK_VERSION.sdk/usr/include/c++ && \
-  cp -r $OSX_NDK_CROSS/SDK/$OSX_SDK/usr/include/c++/v1 $IOS_NDK_ARM64/SDK/$IOS_SDK_VERSION.sdk/usr/include/c++
+# # 2 separate steps to make it easier to debug
+# RUN \
+#   rm -rf /$IOS_SDK_VERSION.sdk.tmp.zip  && \
+#   # TODO the new iPhoneOS version does not have the /include/c++ directory. Hope it's not an issue...
+#   # if it becomes an issue, download from here https://github.com/phracker/MacOSX-SDKs/tree/master/MacOSX10.13.sdk/usr/include
+#   # the previous version. Maybe it's not going to be an issue.
+#   mkdir -p $IOS_NDK_ARM64/SDK/$IOS_SDK_VERSION.sdk/usr/include/c++ && \
+#   cp -r $OSX_NDK_CROSS/SDK/$OSX_SDK/usr/include/c++/v1 $IOS_NDK_ARM64/SDK/$IOS_SDK_VERSION.sdk/usr/include/c++
 
-ENV PATH $IOS_NDK_ARM64/bin:$PATH
+# ENV PATH $IOS_NDK_ARM64/bin:$PATH
 
 # Configure the container for Android cross compilation
 # android-ndk-r21e c3ebc83c96a4d7f539bd72c241b2be9dcd29bda9
